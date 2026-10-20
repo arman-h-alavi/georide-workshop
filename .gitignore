@@ -1,0 +1,23 @@
+# Local environment files; keep only the safe template
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Go build artifacts
+location_service/location-service
+
+# Runtime log data (not source)
+loki/data/
+*.log
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

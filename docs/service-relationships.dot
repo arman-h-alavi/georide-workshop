@@ -1,0 +1,34 @@
+digraph GeoRide {
+  graph [rankdir=LR, bgcolor="white", pad="0.3", nodesep="0.5", ranksep="0.85", fontname="DejaVu Sans", label="GeoRide - relationships of the 7 assigned services", labelloc=t, fontsize=20];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=11, color="#475569", margin="0.16,0.1"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#334155", arrowsize=0.8];
+
+  // context nodes (not part of the 7)
+  client [label="Client\n(curl / browser)", fillcolor="#f1f5f9", style="rounded,filled,dashed"];
+  api [label="api\n(Flask :5000)", fillcolor="#f1f5f9", style="rounded,filled,dashed"];
+  matcher [label="matcher\n(worker)", fillcolor="#f1f5f9", style="rounded,filled,dashed"];
+  location [label="location\n(Go :8081, metrics :9091)", fillcolor="#f1f5f9", style="rounded,filled,dashed"];
+  docker [label="Docker containers\n(stdout/stderr logs)", fillcolor="#f1f5f9", style="rounded,filled,dashed"];
+
+  // the 7 assigned services
+  nginx [label="1. nginx\nreverse proxy :80", fillcolor="#bfdbfe"];
+  postgres [label="2. postgres\nusers + trips", shape=cylinder, fillcolor="#bbf7d0"];
+  rabbitmq [label="3. rabbitmq\nqueue: ride_requests", shape=component, fillcolor="#fde68a"];
+  redis [label="4. redis\ndriver geo-index", shape=cylinder, fillcolor="#bbf7d0"];
+  loki [label="5. loki\nlog storage :3100", fillcolor="#e9d5ff"];
+  promtail [label="6. promtail\nlog collector", fillcolor="#e9d5ff"];
+  prometheus [label="7. prometheus\nmetrics :9090", fillcolor="#fed7aa"];
+
+  client -> nginx [label="HTTP :80"];
+  nginx -> api [label="proxy_pass\napi:5000"];
+  api -> postgres [label="SQL: users,\ntrips"];
+  api -> rabbitmq [label="publish\nride request"];
+  rabbitmq -> matcher [label="consume"];
+  matcher -> postgres [label="assign driver /\nupdate status"];
+  matcher -> location [label="find nearest\ndriver"];
+  location -> redis [label="GEOADD /\nGEOSEARCH"];
+  docker -> promtail [label="read logs via\ndocker.sock", style=dashed];
+  promtail -> loki [label="push logs\n/loki/api/v1/push"];
+  prometheus -> location [label="scrape :9091\nevery 15s", style=dashed];
+  prometheus -> prometheus [label="self-scrape", style=dashed];
+}
